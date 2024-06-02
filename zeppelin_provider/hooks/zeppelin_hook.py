@@ -36,11 +36,15 @@ class ZeppelinHook(BaseHook, LoggingMixin):
         self.z_conn = self.get_connection(conn_id)
         zeppelin_url = "http://" + self.z_conn.host + ":" + str(self.z_conn.port)
         extra_config = self.z_conn.extra_dejson
+        self.principal = extra_config.get('principal', None)
+        self.principal_keytab = extra_config.get('principal_keytab', None)
         self.knox_sso = extra_config.get('KNOX_SSO', None)
         self.log.info("KNOX_SSO: " + str(self.knox_sso))
         if self.knox_sso:
             zeppelin_url = extra_config.get('REST_URL', None)
             self.client_config = ClientConfig(zeppelin_url, 5, self.knox_sso)
+        if self.principal:
+            self.client_config = ClientConfig(zeppelin_url, query_interval=5, principal=self.principal, principal_keytab=self.principal_keytab)
         else:
             self.client_config = ClientConfig(zeppelin_url, query_interval=5)
         self.z_client = ZeppelinClient(self.client_config)
@@ -51,6 +55,9 @@ class ZeppelinHook(BaseHook, LoggingMixin):
             user = self.z_conn.self.login
             password = self.z_conn.password
             self.z_client.self.login(user, password)
+        if self.principal:
+            self.log.info("Principal is enabled, self.login via principal")
+            self.z_client.login(principal=self.principal, principal_keytab=self.principal_keytab)
 
     def run_note(self, note_id: str, parameters: Optional[Dict[str, str]]={}) -> None:
         note_result = self.z_client.execute_note(note_id, parameters)

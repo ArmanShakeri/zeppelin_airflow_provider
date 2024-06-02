@@ -19,10 +19,12 @@ class ClientConfig:
     """
     Client side configuration of Zeppelin SDK
     """
-    def __init__(self, zeppelin_rest_url, query_interval=1, knox_sso_url=None):
+    def __init__(self, zeppelin_rest_url, query_interval=1, knox_sso_url=None, principal=None, principal_keytab=None):
         self.zeppelin_rest_url = zeppelin_rest_url
         self.query_interval = query_interval
         self.knox_sso_url = knox_sso_url
+        self.principal = principal
+        self.principal_keytab = principal_keytab
 
     def get_zeppelin_rest_url(self):
         return self.zeppelin_rest_url

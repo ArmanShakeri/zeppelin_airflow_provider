@@ -19,6 +19,8 @@ from .config import ClientConfig
 from .notebook import Note, Paragraph
 import time
 import logging
+from spnego import KerberosKeytab
+from requests_kerberos import HTTPKerberosAuth
 
 
 class SessionInfo:
@@ -71,7 +73,7 @@ class ZeppelinClient:
         self._check_response(resp)
         return resp.json()['body']['version']
 
-    def login(self, user_name, password, knox_sso = None):
+    def login(self, user_name=None, password=None, knox_sso=None, principal=None, principal_keytab=None):
         """
         Login to Zeppelin, use knox_sso if it is provided.
         :param user_name:
@@ -89,6 +91,14 @@ class ZeppelinClient:
             if resp.status_code != 200:
                 raise Exception("Fail to get ticket after Knox SSO, status: {}, status_text: {}" \
                                 .format(resp.status_code, resp.text))
+        if principal:
+            cred = KerberosKeytab(principal_keytab, principal)
+            auth = HTTPKerberosAuth(principal=cred)
+            self.session.auth = auth
+            resp = self.session.get(self.zeppelin_rest_url + "/api/notebook")
+            if resp.status_code != 200:
+                raise Exception("Kerberos login fails, status: {}, status_text: {}" \
+                    .format(resp.status_code, resp.text))
         else:
             resp = self.session.post(self.zeppelin_rest_url + "/api/login",
                                      data = {'userName': user_name, 'password': password})
