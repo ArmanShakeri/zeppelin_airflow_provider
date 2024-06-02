@@ -29,7 +29,7 @@ class Note:
         self.is_running = False
         if 'info' in note_json:
             info_json = note_json['info']
-            self.is_running = bool(info_json.get('isRunning', 'False'))
+            self.is_running = bool(info_json.get('isRunning'))
         self.paragraphs = []
         if 'paragraphs' in note_json:
             paragraph_json_array = note_json['paragraphs']
